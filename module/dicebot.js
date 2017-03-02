@@ -18,11 +18,11 @@ function doRoll(message,param){
 	if (!validated) {
 		const msgEmbed = new Discord.RichEmbed()
 				.setTitle(message.author.username)
-				.addField("Error", "Invalid expression.")
+				.addField('Error', 'Invalid expression.')
 				
 		if (comment) msgEmbed.setDescription(comment);
 
-		message.channel.sendEmbed(msgEmbed, "", { disableEveryone: true }).catch(console.error);
+		message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
 		return;
 	}
 	
@@ -36,11 +36,11 @@ function doRoll(message,param){
 	if (expDice[1] > 50 || expDice[2] > 100) {
 		const msgEmbed = new Discord.RichEmbed()
 				.setTitle(message.author.username)
-				.addField("Error", "Too many dice or dice sides.")
+				.addField('Error', 'Too many dice or dice sides.')
 				
 		if (comment) msgEmbed.setDescription(comment);
 
-		message.channel.sendEmbed(msgEmbed, "", { disableEveryone: true }).catch(console.error);
+		message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
 		return;
 	}
 
@@ -187,13 +187,13 @@ function doRoll(message,param){
 	
 	const msgEmbed = new Discord.RichEmbed()
 		.setTitle(message.author.username)
-		.addField("Rolling", expression, true)
+		.addField('Rolling', expression, true)
 		//.setThumbnail(client.user.avatarURL)
-		.addField("Result", msgText, true);
+		.addField('Result', msgText, true);
 		
 		if (comment) msgEmbed.setDescription(comment);
 	
-	message.channel.sendEmbed(msgEmbed, "", { disableEveryone: true }).catch(console.error);
+	message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
 }
 
 /* Complex dice example

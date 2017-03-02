@@ -103,7 +103,7 @@ global.getMentionFromId = function(id) {
 }
 
 global.registerCommand = function(owner, command, context, func, direct) {
-	if (!typeof(func) === "function") return false;
+	if (!typeof(func) === 'function') return false;
 	
 	// Check if there's a matching command and context registered and remove the previous version
 	Commands.forEach(function(cmd) {
