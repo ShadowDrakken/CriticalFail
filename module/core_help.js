@@ -10,11 +10,9 @@ function doHelp(message,param){
 	if (!param) {
 		msgEmbed.addField('Usage', 'help [term]');
 	} else {
-		var params = param.replace("\s", ' ').split(' ');
-		
 		// Check if there's a matching term registered and respond
 		Terms.forEach(function(help) {
-			if (help.term === params[0]) {
+			if (help.term === param[0]) {
 				help.func(msgEmbed, params);
 			}
 		});

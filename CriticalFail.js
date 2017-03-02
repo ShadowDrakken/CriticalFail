@@ -39,7 +39,7 @@ client.on('message', message => {
 	if (!validContext) return;
 	
 	// Split the message into individual parameters
-	var param = message.content.split(' ');
+	var param = message.content.replace("\s",' ').split(' ');
 	
 	// Clean empty parameters
 	param = param.filter(function(n){ return n != undefined }); 
