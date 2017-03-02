@@ -109,7 +109,7 @@ global.registerCommand = function(owner, command, context, func, direct) {
 	Commands.forEach(function(cmd) {
 		if (cmd.context === context && cmd.command === command) {
 			console.log('Replacing existing command: ' + cmd.context + cmd.command);
-			Commands.splice(Commands.indexOf(existingCommand), 1);
+			Commands.splice(Commands.indexOf(cmd), 1);
 		}
 	});
 	
@@ -172,9 +172,14 @@ function loadModuleList(message,loadList) {
 		var modulePath = './module/' + item;
 		
 		if (fs.statSync(modulePath).isFile) {
-			module = Reload(modulePath);
-			LoadedModules.push({moduleName:module});
-			if (message) message.channel.sendMessage('Module `' + moduleName + '` loaded.');
+			try {
+				module = Reload(modulePath);
+			} catch(err) {}
+			
+			if (module) {
+				LoadedModules.push({moduleName:module});
+				if (message) message.channel.sendMessage('Module `' + moduleName + '` loaded.');
+			}
 		} else {
 			if (message) message.channel.sendMessage('Unable to find module `' + moduleName + '`');
 		}

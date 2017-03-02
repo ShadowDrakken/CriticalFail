@@ -1,5 +1,6 @@
 var scriptName = Path.basename(__filename);
 registerCommand(scriptName, 'roll', Context.task, doRoll);
+registerHelpTerm(scriptName, 'roll', doHelp);
 
 function doRoll(message,param){
 	var expression = param.join(' ');
@@ -196,7 +197,8 @@ function doRoll(message,param){
 	message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
 }
 
-/* Complex dice example
+function doHelp(msg, param) {
+	msg.addField('Complex dice example',`
 4d6+2k3e6l1t4s4x6:Comment
 4d6+2 K3 E6L1 T4S4 X6 :Comment
 
@@ -211,13 +213,15 @@ T4 - count the number of successes that meet the target value 4+
 X6 - roll a new set and present results 4 times
 
 :Comment - display the comment with the returned results
+`);
 
-No expression may be used more than once
-Spaces between expressions are optional
-Expressions can occur in any order, with the exception of the dice expression which must
-	be at the beginning and :comments which must occur at the end of the expression
-Expressions are case-insensitive
-*/
+	msg.addField('Notes',`
+* No expression may be used more than once.
+* Spaces between expressions are optional.
+* Expressions can occur in any order, with the exception of the dice expression which must be at the beginning and :comments which must occur at the end of the expression.
+* Expressions are case-insensitive.
+`);
+}
 
 function RollDie(sides) {
 	sides = parseInt(sides);

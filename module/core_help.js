@@ -1,24 +1,28 @@
 var scriptName = Path.basename(__filename);
-registerCommand(scriptName, 'help', Context.info, doHelp);
+registerCommand(scriptName, 'help', Context.info, doHelp, true);
 
 global.Terms = []
 
 function doHelp(message,param){
+	var hasReturn = false;
 	const msgEmbed = new Discord.RichEmbed()
-			.setTitle(message.author.username)
+			.setTitle(message.author.username);
 
-	if (!param) {
+	if (!param || param.length == 0) {
 		msgEmbed.addField('Usage', 'help [term]');
+		hasReturn = true;
 	} else {
 		// Check if there's a matching term registered and respond
 		Terms.forEach(function(help) {
 			if (help.term === param[0]) {
-				help.func(msgEmbed, params);
+				help.func(msgEmbed, param);
+				hasReturn = true;
 			}
 		});
 	}
 	
-	message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
+	if (hasReturn)
+		message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
 }
 
 function getTopic(topic) {
@@ -38,7 +42,7 @@ global.registerHelpTerm = function (owner, term, func) {
 	Terms.forEach(function(help) {
 		if (help.term === term) {
 			console.log('Replacing existing help term: ' + help.term);
-			Terms.splice(Terms.indexOf(existingTerm), 1);
+			Terms.splice(Terms.indexOf(help), 1);
 		}
 	});
 	
@@ -62,7 +66,7 @@ global.unregisterHelpTerms = function (owner) {
 	Terms.forEach(function(help) {
 		if (help.owner === owner) {
 			console.log('Unregistering help term: ' + help.term);
-			Terms.splice(Terms.indexOf(existingTerm), 1);
+			Terms.splice(Terms.indexOf(help), 1);
 		}
 	});
 }
