@@ -152,8 +152,10 @@ global.loadModules = function(modulePath,message) {
 			loadModuleList(message,loadList);
 		});
 	} else {
-		Modules.push(modulePath.replace(/.js$/i,''));
-		Modules.sort();
+		if (!Modules.indexOf(modulePath.replace(/.js$/i,''))) {
+			Modules.push(modulePath.replace(/.js$/i,''));
+		}
+		//Modules.sort();
 		nconf.set('modules', Modules);
 		saveConfig();
 		loadModuleList(message,[modulePath]);
