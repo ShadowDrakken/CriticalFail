@@ -16,7 +16,13 @@ function doRoll(message,param){
 	// Validate the input is a valid dice roll with valid expressions
 	var validated = expression.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)*))/i);
 	if (!validated) {
-		message.reply((comment + ' `Invalid expression`').trim());
+		const msgEmbed = new Discord.RichEmbed()
+				.setTitle(message.author.username)
+				.addField("Error", "Invalid expression.")
+				
+		if (comment) msgEmbed.setDescription(comment);
+
+		message.channel.sendEmbed(msgEmbed, "", { disableEveryone: true }).catch(console.error);
 		return;
 	}
 	
@@ -28,7 +34,13 @@ function doRoll(message,param){
 		
 	// Validate number of dice and dice sides
 	if (expDice[1] > 50 || expDice[2] > 100) {
-		message.reply((comment +'`Too many dice or dice sides.`').trim());
+		const msgEmbed = new Discord.RichEmbed()
+				.setTitle(message.author.username)
+				.addField("Error", "Too many dice or dice sides.")
+				
+		if (comment) msgEmbed.setDescription(comment);
+
+		message.channel.sendEmbed(msgEmbed, "", { disableEveryone: true }).catch(console.error);
 		return;
 	}
 
@@ -171,7 +183,6 @@ function doRoll(message,param){
 		RollSets.push(('`'+ validated[1] + '`=`'+ outRolls +'`'+ outDropped +'=`'+ total +'`').trim());
 	}
 	
-	//message.reply(comment +(RollSets.length > 1 ? '\r\n' : ' ')+ RollSets.join("\r\n"));
 	msgText = RollSets.join("\r\n");
 	
 	const msgEmbed = new Discord.RichEmbed()
@@ -183,12 +194,6 @@ function doRoll(message,param){
 		if (comment) msgEmbed.setDescription(comment);
 	
 	message.channel.sendEmbed(msgEmbed, "", { disableEveryone: true }).catch(console.error);
-	
-	/* Turns out this makes the channel a bit confusing
-	// Delete the user's original message in order to prevent tampering
-	if(message.deletable)
-		message.delete().catch(console.log);
-	*/
 }
 
 /* Complex dice example
