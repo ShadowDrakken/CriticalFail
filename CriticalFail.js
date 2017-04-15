@@ -157,6 +157,8 @@ global.loadModules = function(modulePath,message) {
 		// Add module to load list
 		Modules.push(moduleName);
 		
+		Modules = Modules.sortModules();
+		
 		// Cleanup duplicates
 		Modules = Modules.filter(function(elem, index, self) {
 			return index == self.indexOf(elem);
@@ -193,6 +195,30 @@ function loadModuleList(message,loadList) {
 			if (message) message.channel.sendMessage('Unable to find module `' + moduleName + '`');
 		}
 	});
+}
+
+Array.prototype.sortModules = function() {
+	var outCore = [];
+	var outMod = [];
+	
+	this.forEach(function(item) {
+		if (item.match(/^core_.*/i)) {
+			outCore.push(item);
+		} else {
+			outMod.push(item);
+		}
+	});
+	
+	outCore = outCore.sort();
+	outMod = outMod.sort();
+	
+	var newArr = outCore.concat(outMod);
+	
+	console.log(outCore);
+	console.log(outMod);
+	console.log(newArr);
+	
+	return newArr;
 }
 
 loadModules();
