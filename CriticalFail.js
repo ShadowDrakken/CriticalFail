@@ -214,10 +214,6 @@ Array.prototype.sortModules = function() {
 	
 	var newArr = outCore.concat(outMod);
 	
-	console.log(outCore);
-	console.log(outMod);
-	console.log(newArr);
-	
 	return newArr;
 }
 
