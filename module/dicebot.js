@@ -5,7 +5,59 @@ registerHelpTerm(scriptName, 'roll', doHelpRoll);
 registerCommand(scriptName, 'dice', Context.task, doCommandDice);
 registerHelpTerm(scriptName, 'dice', doHelpDice);
 
-function doCommandDice(message,param) {}
+var nconfDice = new nconf.Provider();
+nconfDice.use('file', { file: './'+ scriptName +'.json' });
+nconfDice.defaults({
+	'global': []
+});
+nconfDice.load();
+
+function doCommandDice(message,param) {
+	var command = param.splice(0,1)[0].toLowerCase();
+
+	// Prepare RichEmbed message
+	const msgEmbed = new Discord.RichEmbed()
+		.setTitle(message.author.username);
+	
+	switch (command) {
+		case 'set':
+			if (param.length < 2) {
+				msgEmbed.addField('Error [' + command + ']', 'Missing parameters.');
+				break;
+			}
+			break;
+		case 'unset':
+			if (param.length < 1) {
+				msgEmbed.addField('Error [' + command + ']', 'Missing parameters.');
+				break;
+			}
+
+			var macro = param.splice(0,1)[0].toLowerCase();
+			if (!isMacro(macro)) {
+				msgEmbed.addField('Error [' + command + ']', 'Unknown macro [' + macro + '].');
+				break;
+			}
+			break;
+		case 'show':
+		case 'view':
+			if (param.length < 1) {
+				msgEmbed.addField('Error [' + command + ']', 'Missing parameters.');
+				break;
+			}
+
+			var macro = param.splice(0,1)[0].toLowerCase();
+			if (!isMacro(macro)) {
+				msgEmbed.addField('Error [' + command + ']', 'Unknown macro [' + macro + '].');
+				break;
+			}
+			break;
+		default:
+			msgEmbed.addField('Error [' + command + ']', 'Unknown command.');
+			break;
+	}
+
+	message.channel.sendEmbed(msgEmbed);
+}
 
 function doCommandRoll(message,param){
 	var expression = param.join(' ');
@@ -16,6 +68,9 @@ function doCommandRoll(message,param){
 		comment = expression.split(':')[1].replace(/\s+$|^\s+/,'');
 		expression = expression.split(':')[0].toLowerCase();
 	}
+	
+	console.log('Comment: '+ comment);
+	console.log('Expression: '+ expression);
 
 	// Is this an expression, or a macro, or invalid?
 	if (isExpression(expression)) {
@@ -70,16 +125,15 @@ function doRollDice (message,param,expression,comment,modifiers) {
 		var expSplit = [expression];
 	}
 
+	console.log('expSplit: ' + expSplit);
 	if (expSplit.length > 4) return;
 	
-	for (var index in expSplit) {
-		var expSingle = expSplit[index];
-		
+	expSplit.forEach(function(expSingle) {
 		// Validate the input is a valid dice roll with valid expressions
 		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)*))/i);
 		if (!validated) {
 			msgEmbed.addField('Error [' + expSingle + ']', 'Invalid expression.');
-			continue;
+			return;
 		}
 
 		// Split the dice portion of the expression into dice, sides and modifier
@@ -91,7 +145,7 @@ function doRollDice (message,param,expression,comment,modifiers) {
 		// Validate number of dice and dice sides
 		if (expDice[1] > 50 || expDice[2] > 100) {
 			msgEmbed.addField('Error [' + expSingle + ']', 'Too many dice or dice sides.');
-			continue;
+			return;
 		}
 
 		var repeats = 1;
@@ -238,7 +292,7 @@ function doRollDice (message,param,expression,comment,modifiers) {
 
 		// Add results of this expression to the RichEmbed
 		msgEmbed.addField('Rolling [' + expSingle + ']', msgText);
-	}
+	});
 	
 	// Send RichEmbed message to channel
 	message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
@@ -278,6 +332,7 @@ show [~]<command> - Shows the saved macro expression.
 `);
 
 	msg.addField('Notes',`
+* Macro names can only contains alphanumeric characters, underscores and hyphens
 * Prefixing a macro with ~ will make it globally available, otherwise macros are saved per-user.
 * Macros are case-insensitive.
 `);
@@ -299,23 +354,36 @@ function isExpression(expression) {
 		var expSplit = [expression];
 	}
 
-	for (var index in expSplit) {
-		var expSingle = expSplit[index];
-		
+	expSplit.forEach(function(expSingle) {
 		// Validate the input is a valid dice roll with valid expressions
 		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)*))/i);
 		if (!validated) {
 			return false;
 		}
-	}
+	});
 	return true;
 }
 
 function isMacro(expression) {
 	// Simple test for now, this will be upgraded to actually verify if the macro exists
+	if (!isValidMacroName(expression)) {
+		return false;
+	} else if (macroExists(expression)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function isValidMacroName(expression) {
+	// Macro names can only contains alphanumeric characters, underscores and hyphens.
 	if (!expression.match(/^((?:[~]?)(?:[a-z0-9_-]+))$/i)) {
 		return false;
 	} else {
 		return true;
 	}
+}
+
+function macroExists (expression) {
+	return false;
 }
