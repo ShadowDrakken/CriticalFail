@@ -2,8 +2,8 @@ var scriptName = Path.basename(__filename);
 registerCommand(scriptName, 'roll', Context.task, doCommandRoll);
 registerHelpTerm(scriptName, 'roll', doHelpRoll);
 
-registerCommand(scriptName, 'dice', Context.task, doCommandDice);
-registerHelpTerm(scriptName, 'dice', doHelpDice);
+registerCommand(scriptName, 'macro', Context.task, doCommandMacro);
+registerHelpTerm(scriptName, 'macro', doHelpMacro);
 
 var nconfDice = new nconf.Provider();
 nconfDice.use('file', { file: './config/'+ scriptName.replace(/.js$/i, '') +'.json' });
@@ -12,71 +12,44 @@ nconfDice.defaults({
 });
 nconfDice.load();
 
-function doCommandDice(message,param) {
-	var command = param.splice(0,1)[0].toLowerCase();
+function doHelpRoll(msg, param) {
+	msg.addField('Complex dice example',`
+4d6+2k3e6l1t4s4x6:Comment
+4d6+2 K3 E6L1 T4S4 X6 :Comment
 
-	// Prepare RichEmbed message
-	const msgEmbed = new Discord.RichEmbed()
-		.setTitle(getNickname(message));
-	
-	switch (command) {
-		case 'set':
-			// Validate number of parameters. Minimum of 2, macro name [0] and macro contents [1...n]
-			if (param.length < 2) {
-				msgEmbed.addField('Error [' + command + ']', 'Missing parameters.');
-				break;
-			}
-			
-			// Split out the macro name and merge the expression
-			var macro = param.splice(0,1)[0].toLowerCase();
-			var expression = param.join();
-			
-			// Validate the macro name and expression
-			if (isValidMacroName(macro) && isExpression(expression)) {
-				// If everything passes, create the macro
-				setMacro(message.author.id,msgEmbed,macro,expression);
-			} else {
-				msgEmbed.addField('Error [' + command + ']', 'Invalid parameters.');
-			}
-			
-			break;
-		case 'unset':
-			// Validate number of parameters. Must have exactly one parameter, the macro name
-			if (param.length != 1) {
-				msgEmbed.addField('Error [' + command + ']', 'Wrong number of parameters.');
-				break;
-			}
+4d6 - roll a d6 four times, modify the pool by the keeps, then total the remaining pool
++2 - add 2 to the total roll after applying keeps and explodes, but before applying successes; can also use -2 for subtraction
 
-			// Does the macro exist?
-			var macro = param.splice(0,1)[0].toLowerCase();
-			if (!isMacro(message.author.id,macro)) {
-				msgEmbed.addField('Error [' + command + ']', 'Unknown macro [' + macro + '].');
-				break;
-			} else {
-				unsetMacro(message.author.id,msgEmbed,macro);
-			}
-			break;
-		case 'list':
-			break;
-		case 'show':
-		case 'view':
-			if (param.length < 1) {
-				msgEmbed.addField('Error [' + command + ']', 'Missing parameters.');
-				break;
-			}
+K3 - keep the highest 3 die; can also use K-3 to keep the lowest 3
+E6 - explode the dice on anything 6 or higher
+  L1 - limit explosions to 1 iteration, leave off for unlimited explosions
+T4 - count the number of successes that meet the target value 4+
+  S4 - count additional successes every 4 past the target
+X6 - roll a new set and present results 4 times
 
-			var macro = param.splice(0,1)[0].toLowerCase();
-			if (!isMacro(message.author.id,macro)) {
-				msgEmbed.addField('Error [' + command + ']', 'Unknown macro [' + macro + '].');
-				break;
-			}
-			break;
-		default:
-			msgEmbed.addField('Error [' + command + ']', 'Unknown command.');
-			break;
-	}
+:Comment - display the comment with the returned results
+`);
 
-	message.channel.sendEmbed(msgEmbed);
+	msg.addField('Notes',`
+* No expression may be used more than once.
+* Spaces between expressions are optional.
+* Expressions can occur in any order, with the exception of the dice expression which must be at the beginning and :comments which must occur at the end of the expression.
+* Expressions are case-insensitive.
+`);
+}
+
+function doHelpMacro(msg, param) {
+	msg.addField('Managing Macros',`
+[~]<command> <expression> - Creates a macro using standard dice notation.
+[~]<command> remove- Removes the specified macro.
+[~]<command> - Shows the saved macro expression. 
+`);
+
+	msg.addField('Notes',`
+* Macro names can only contains alphanumeric characters, underscores and hyphens
+* Prefixing a macro with ~ will make it globally available, otherwise macros are saved per-user.
+* Macros are case-insensitive.
+`);
 }
 
 function doCommandRoll(message,param){
@@ -93,7 +66,7 @@ function doCommandRoll(message,param){
 	if (isExpression(expression)) {
 		doRollDice(message, param, expression, comment);		
 	} else if (isMacro(message.author.id, expression)) {
-		doMacro(message, param, expression, comment);
+		doRollMacro(message, param, expression, comment);
 	} else {
 		// Prepare RichEmbed message
 		const msgEmbed = new Discord.RichEmbed()
@@ -108,7 +81,7 @@ function doCommandRoll(message,param){
 	}
 }
 
-function doMacro(message,param,expression,comment) {
+function doRollMacro(message,param,expression,comment) {
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
 		.setTitle(getNickname(message));
@@ -316,53 +289,6 @@ function doRollDice (message,param,expression,comment,modifiers) {
 	message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
 }
 
-function doHelpRoll(msg, param) {
-	msg.addField('Complex dice example',`
-4d6+2k3e6l1t4s4x6:Comment
-4d6+2 K3 E6L1 T4S4 X6 :Comment
-
-4d6 - roll a d6 four times, modify the pool by the keeps, then total the remaining pool
-+2 - add 2 to the total roll after applying keeps and explodes, but before applying successes; can also use -2 for subtraction
-
-K3 - keep the highest 3 die; can also use K-3 to keep the lowest 3
-E6 - explode the dice on anything 6 or higher
-  L1 - limit explosions to 1 iteration, leave off for unlimited explosions
-T4 - count the number of successes that meet the target value 4+
-  S4 - count additional successes every 4 past the target
-X6 - roll a new set and present results 4 times
-
-:Comment - display the comment with the returned results
-`);
-
-	msg.addField('Notes',`
-* No expression may be used more than once.
-* Spaces between expressions are optional.
-* Expressions can occur in any order, with the exception of the dice expression which must be at the beginning and :comments which must occur at the end of the expression.
-* Expressions are case-insensitive.
-`);
-}
-
-function doHelpDice(msg, param) {
-	msg.addField('Dice Macros',`
-set [~]<command> <expression> - Creates a macro using standard dice notation.
-unset [~]<command> - Removes the specified macro.
-show [~]<command> - Shows the saved macro expression. 
-`);
-
-	msg.addField('Notes',`
-* Macro names can only contains alphanumeric characters, underscores and hyphens
-* Prefixing a macro with ~ will make it globally available, otherwise macros are saved per-user.
-* Macros are case-insensitive.
-`);
-}
-
-function RollDie(sides) {
-	sides = parseInt(sides);
-	if (!sides) return 0;
-	
-	return Math.floor(Math.random() * sides) + 1;
-}
-
 function isExpression(expression) {
 	// Compact and split the expression
 	expression = expression.replace(/ /g, '');
@@ -384,36 +310,58 @@ function isExpression(expression) {
 	return true;
 }
 
-function isMacro(userid,macro) {
-	// Simple test for now, this will be upgraded to actually verify if the macro exists
-	if (!isValidMacroName(macro)) {
-		return false;
-	} else if (macro[0] == '~') {
-		// Global macro
-		var expression = nconfDice.get('global:'+ macro.replace('~',''));
+function doCommandMacro(message,param) {
+	if (!param || param.length == 0) return;
+	
+	var macro = param.splice(0,1)[0].toLowerCase();
+
+	// Prepare RichEmbed message
+	const msgEmbed = new Discord.RichEmbed()
+		.setTitle(getNickname(message));
+	
+	if (param.length == 0) {
+		var command = 'show';
 	} else {
-		// Personal macro
-		if (!userid) {
-			return false;
-		} else {
-			var expression = nconfDice.get('personal:'+ userid +':macros:'+ macro.replace('~',''));
-		}
+		var command = param[0];
 	}
 	
-	if (expression) {
-		return true;
+	if (['list','showall'].indexOf(macro) >= 0) {
+		listMacros(message.author.id,msgEmbed);
+	} else if (['show','view'].indexOf(command) >= 0) {
+		// If a macro was given with no data, display the macro
+		if (!isMacro(message.author.id,macro)) {
+			msgEmbed.addField('Error ['+ command +']', 'Unknown macro ['+ macro +'].');
+		} else {
+			if (macro[0] == '~') {
+				// Global macro
+				var expression = nconfDice.get('global:'+ macro.replace('~',''));
+			} else {
+				// Personal macro
+				var expression = nconfDice.get('personal:'+ message.author.id +':macros:'+ macro.replace('~',''));
+			}
+			msgEmbed.addField('Macro ['+ macro +']', expression);
+		}
+	} else if (['remove','delete','clear'].indexOf(command) >= 0) {
+		// Does the macro exist?
+		if (!isMacro(message.author.id,macro)) {
+			msgEmbed.addField('Error [' + command + ']', 'Unknown macro [' + macro + '].');
+		} else {
+			unsetMacro(message.author.id,msgEmbed,macro);
+		}
 	} else {
-		return false;
+		// Merge the expression
+		var expression = param.join();
+		
+		// Validate the macro name and expression
+		if (isValidMacroName(macro) && isExpression(expression)) {
+			// If everything passes, create the macro
+			setMacro(message.author.id,msgEmbed,macro,expression);
+		} else {
+			msgEmbed.addField('['+ macro +'] Invalid expression.', expression);
+		}		
 	}
-}
-
-function isValidMacroName(expression) {
-	// Macro names can only contains alphanumeric characters, underscores and hyphens.
-	if (!expression.match(/^((?:[~]?)(?:[a-z0-9_-]+))$/i)) {
-		return false;
-	} else {
-		return true;
-	}
+	
+	message.channel.sendEmbed(msgEmbed);
 }
 
 function setMacro(userid,msgEmbed,macro,expression) {
@@ -459,6 +407,49 @@ function unsetMacro(userid,msgEmbed,macro) {
 	
 	msgEmbed.addField('Macro successfully removed.', macro +' ['+ expression +']');
 	saveDiceConfig();	
+}
+
+function listMacros(userid, msgEmbed) {
+	
+}
+
+function isMacro(userid,macro) {
+	// Simple test for now, this will be upgraded to actually verify if the macro exists
+	if (!isValidMacroName(macro)) {
+		return false;
+	} else if (macro[0] == '~') {
+		// Global macro
+		var expression = nconfDice.get('global:'+ macro.replace('~',''));
+	} else {
+		// Personal macro
+		if (!userid) {
+			return false;
+		} else {
+			var expression = nconfDice.get('personal:'+ userid +':macros:'+ macro.replace('~',''));
+		}
+	}
+	
+	if (expression) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function isValidMacroName(expression) {
+	// Macro names can only contains alphanumeric characters, underscores and hyphens.
+	if (!expression.match(/^((?:[~]?)(?:[a-z0-9_-]+))$/i)) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+function RollDie(sides) {
+	sides = parseInt(sides);
+	if (!sides) return 0;
+	
+	return Math.floor(Math.random() * sides) + 1;
 }
 
 function saveDiceConfig() {
