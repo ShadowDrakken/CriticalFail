@@ -21,10 +21,32 @@ function doCommandRoll(message,param){
 	if (isExpression(expression)) {
 		doRollDice(message, param, expression, comment);		
 	} else if (isMacro(expression)) {
-		doMacro(message, param, expression, comment)
+		doMacro(message, param, expression, comment);
 	} else {
+		// Prepare RichEmbed message
+		const msgEmbed = new Discord.RichEmbed()
+			.setTitle(message.author.username);
 		
+		// Put the comment into the message description
+		if (comment) msgEmbed.setDescription(comment);
+
+		msgEmbed.addField('Error [' + expression + ']', 'Invalid expression.');
+
+		message.channel.sendEmbed(msgEmbed);
 	}
+}
+
+function doMacro(message,param,expression,comment) {
+	// Prepare RichEmbed message
+	const msgEmbed = new Discord.RichEmbed()
+		.setTitle(message.author.username);
+	
+	// Put the comment into the message description
+	if (comment) msgEmbed.setDescription(comment);
+
+	msgEmbed.addField(expression, 'Valid macro name');
+
+	message.channel.sendEmbed(msgEmbed);	
 }
 
 function doRollDice (message,param,expression,comment) {
@@ -269,9 +291,31 @@ function RollDie(sides) {
 }
 
 function isExpression(expression) {
+	// Compact and split the expression
+	expression = expression.replace(/ /g, '');
+	if (expression.match(/[;]/g)) {
+		var expSplit = expression.split(';');
+	} else {
+		var expSplit = [expression];
+	}
+
+	for (var index in expSplit) {
+		var expSingle = expSplit[index];
+		
+		// Validate the input is a valid dice roll with valid expressions
+		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)*))/i);
+		if (!validated) {
+			return false;
+		}
+	}
 	return true;
 }
 
 function isMacro(expression) {
-	return true;
+	// Simple test for now, this will be upgraded to actually verify if the macro exists
+	if (!expression.match(/^((?:[~]?)(?:[a-z0-9_-]+))$/i)) {
+		return false;
+	} else {
+		return true;
+	}
 }
