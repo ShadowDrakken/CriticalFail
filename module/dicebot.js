@@ -326,7 +326,7 @@ function doCommandMacro(message,param) {
 	}
 	
 	if (['list','showall'].indexOf(macro) >= 0) {
-		listMacros(message.author.id,msgEmbed);
+		listMacros(message,msgEmbed);
 	} else if (['show','view'].indexOf(command) >= 0) {
 		// If a macro was given with no data, display the macro
 		if (!isMacro(message.author.id,macro)) {
@@ -366,11 +366,14 @@ function doCommandMacro(message,param) {
 
 function setMacro(userid,msgEmbed,macro,expression) {
 	if (macro[0] == '~') {
-		// Global macro
-		nconfDice.set('global:'+ macro.replace('~',''), expression);
+		// Global macro, requires oper status to create or remove
+		if (!isOp(userid)) {
+			msgEmbed.addField('Error', 'Must be an oper to create global macros.');
+		} else {
+			nconfDice.set('global:'+ macro.replace('~',''), expression);
+		}
 	} else {
-		// Personal macro
-		
+		// Personal macro		
 		if (!userid) {
 			msgEmbed.addField('Error', 'Unknown user.');
 			return;
@@ -385,12 +388,15 @@ function setMacro(userid,msgEmbed,macro,expression) {
 
 function unsetMacro(userid,msgEmbed,macro) {
 	if (macro[0] == '~') {
-		// Global macro
-		var expression = nconfDice.get('global:'+ macro.replace('~',''));
-		nconfDice.clear('global:'+ macro.replace('~',''));
+		// Global macro, requires oper status to create or remove
+		if (!isOp(userid)) {
+			msgEmbed.addField('Error', 'Must be an oper to remove global macros.');
+		} else {
+			var expression = nconfDice.get('global:'+ macro.replace('~',''));
+			nconfDice.clear('global:'+ macro.replace('~',''));
+		}
 	} else {
-		// Personal macro
-		
+		// Personal macro		
 		if (!userid) {
 			msgEmbed.addField('Error', 'Unknown user.');
 			return;
@@ -409,8 +415,22 @@ function unsetMacro(userid,msgEmbed,macro) {
 	saveDiceConfig();	
 }
 
-function listMacros(userid, msgEmbed) {
+function listMacros(message, msgEmbed) {
+	var globalMacros = nconfDice.get('global');
+	if (globalMacros) {
+		globalMacros = Object.keys(globalMacros);
+		for (var index in globalMacros) {
+			globalMacros[index] = '~' + globalMacros[index];
+		}
+		msgEmbed.addField('Global Macros', globalMacros.join(', '));
+	}
 	
+	if (message.channel.type === 'dm') {
+		var personalMacros = nconfDice.get('personal:'+ message.author.id +':macros');
+		
+		if (personalMacros)
+			msgEmbed.addField('Personal Macros', Object.keys(personalMacros).join(', '));
+	}
 }
 
 function isMacro(userid,macro) {
