@@ -152,12 +152,21 @@ global.loadModules = function(modulePath,message) {
 			loadModuleList(message,loadList);
 		});
 	} else {
-		if (!Modules.indexOf(modulePath.replace(/.js$/i,''))) {
-			Modules.push(modulePath.replace(/.js$/i,''));
-		}
-		//Modules.sort();
+		var moduleName = modulePath.replace(/.js$/i,'');
+		
+		// Add module to load list
+		Modules.push(moduleName);
+		
+		// Cleanup duplicates
+		Modules = Modules.filter(function(elem, index, self) {
+			return index == self.indexOf(elem);
+		})
+
+		// Save changes to the config
 		nconf.set('modules', Modules);
 		saveConfig();
+		
+		// Load the requested module
 		loadModuleList(message,[modulePath]);
 	}
 }
