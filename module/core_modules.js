@@ -7,7 +7,7 @@ function doModules (message,param){
 	fs.readdir('.\\module', function(err, items){
 		if (err) return;
 		
-		var Modules = nconf.get('modules');
+		var Modules = nconfMain.get('modules');
 
 		items.forEach(function(item){
 			// Only look at JS files

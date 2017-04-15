@@ -1,4 +1,6 @@
 global.nconf = require('nconf');
+global.nconfMain = new nconf.Provider();
+
 global.Discord = require('discord.js');
 global.Path = require('path');
 global.fs = require('fs');
@@ -66,18 +68,18 @@ client.on('message', message => {
 	});
 });
 
-nconf.use('file', { file: './CriticalFail.json' });
-nconf.defaults({
+nconfMain.use('file', { file: './CriticalFail.json' });
+nconfMain.defaults({
 	'loginToken': '',
 	'opList': [],
 	'modules' : ['core_load', 'core_op', 'core_modules', 'core_commands', 'core_help']
 });
-nconf.load();
+nconfMain.load();
 
-client.login(nconf.get('loginToken'));
+client.login(nconfMain.get('loginToken'));
 
 global.isOp = function(id) {
-	var opList = nconf.get('opList');
+	var opList = nconfMain.get('opList');
 	
 	if (opList.find(x => x.id === id))
 		return true;
@@ -86,7 +88,7 @@ global.isOp = function(id) {
 }
 
 global.saveConfig = function() {
-	nconf.save(function(err){
+	nconfMain.save(function(err){
 		if (err) {
 			console.error(err.message);
 			return;
@@ -134,7 +136,7 @@ global.registerCommand = function(owner, command, context, func, direct) {
 }
 
 global.loadModules = function(modulePath,message) {
-	var Modules = nconf.get('modules');
+	var Modules = nconfMain.get('modules');
 	if (!modulePath) {
 		var loadList = [];
 		
@@ -165,7 +167,7 @@ global.loadModules = function(modulePath,message) {
 		})
 
 		// Save changes to the config
-		nconf.set('modules', Modules);
+		nconfMain.set('modules', Modules);
 		saveConfig();
 		
 		// Load the requested module

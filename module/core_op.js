@@ -3,7 +3,7 @@ registerCommand(scriptName, 'op', Context.elevated, doCommandOp);
 
 function doCommandOp(message, param) {
 	if (param.length > 0) {
-		var opList = nconf.get('opList');
+		var opList = nconfMain.get('opList');
 
 		// This should already be handled by the bot, but we want to be doubley sure.
 		if (!isOp(message.author.id)) return;
@@ -43,7 +43,7 @@ function doCommandOp(message, param) {
 					}
 				});
 				
-				nconf.set('opList', opList);
+				nconfMain.set('opList', opList);
 				saveConfig();
 				break;
 			case 'remove':
@@ -67,7 +67,7 @@ function doCommandOp(message, param) {
 					}
 				});
 				
-				nconf.set('opList', opList);
+				nconfMain.set('opList', opList);
 				saveConfig();
 				break;
 			default:

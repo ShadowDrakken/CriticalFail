@@ -3,7 +3,7 @@ registerCommand(scriptName, 'load', Context.elevated, doLoad);
 
 function doLoad(message,param){
 	if (param.length > 0) {
-		var Modules = nconf.get('modules');
+		var Modules = nconfMain.get('modules');
 		
 		param.forEach(function(module) {
 			var moduleFile = module + '.js';
@@ -28,7 +28,7 @@ function doUnload(message,param){
 }
 function doUnload(message,param,silent){
 	if (param.length > 0) {
-		var Modules = nconf.get('modules');
+		var Modules = nconfMain.get('modules');
 		
 		param.forEach(function(module) {
 			var moduleFile = module + '.js';
@@ -71,7 +71,7 @@ function doUnload(message,param,silent){
 		});
 		
 		if (!silent) {
-			nconf.set('modules', Modules);
+			nconfMain.set('modules', Modules);
 			saveConfig();
 		}
 	}
