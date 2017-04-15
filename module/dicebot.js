@@ -1,25 +1,47 @@
 var scriptName = Path.basename(__filename);
-registerCommand(scriptName, 'roll', Context.task, commandRoll);
-registerHelpTerm(scriptName, 'roll', doHelp);
+registerCommand(scriptName, 'roll', Context.task, doCommandRoll);
+registerHelpTerm(scriptName, 'roll', doHelpRoll);
 
-function commandRoll(message,param){
+registerCommand(scriptName, 'dice', Context.task, doCommandDice);
+registerHelpTerm(scriptName, 'dice', doHelpDice);
+
+function doCommandDice(message,param) {}
+
+function doCommandRoll(message,param){
 	var expression = param.join(' ');
 	var comment = '';
-	//if (expression.match(',') > 1) return;
 	
 	// separate out the comment in advance
 	if (expression.match(/[:]/g)) {
 		comment = expression.split(':')[1].replace(/\s+$|^\s+/,'');
 		expression = expression.split(':')[0].toLowerCase();
 	}
-	expression = expression.replace(/ /g, '');
 
+	// Is this an expression, or a macro, or invalid?
+	if (isExpression(expression)) {
+		doRollDice(message, param, expression, comment);		
+	} else if (isMacro(expression)) {
+		doMacro(message, param, expression, comment)
+	} else {
+		
+	}
+}
+
+function doRollDice (message,param,expression,comment) {
+	var modifiers = [];
+	doRollDice(message, param, expression, comment, modifiers);
+}
+
+function doRollDice (message,param,expression,comment,modifiers) {
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
 		.setTitle(message.author.username);
 	
+	// Put the comment into the message description
 	if (comment) msgEmbed.setDescription(comment);
 
+	// Compact and split the expression
+	expression = expression.replace(/ /g, '');
 	if (expression.match(/[;]/g)) {
 		var expSplit = expression.split(';');
 	} else {
@@ -200,7 +222,7 @@ function commandRoll(message,param){
 	message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
 }
 
-function doHelp(msg, param) {
+function doHelpRoll(msg, param) {
 	msg.addField('Complex dice example',`
 4d6+2k3e6l1t4s4x6:Comment
 4d6+2 K3 E6L1 T4S4 X6 :Comment
@@ -226,9 +248,30 @@ X6 - roll a new set and present results 4 times
 `);
 }
 
+function doHelpDice(msg, param) {
+	msg.addField('Dice Macros',`
+set [~]<command> <expression> - Creates a macro using standard dice notation.
+unset [~]<command> - Removes the specified macro.
+show [~]<command> - Shows the saved macro expression. 
+`);
+
+	msg.addField('Notes',`
+* Prefixing a macro with ~ will make it globally available, otherwise macros are saved per-user.
+* Macros are case-insensitive.
+`);
+}
+
 function RollDie(sides) {
 	sides = parseInt(sides);
 	if (!sides) return 0;
 	
 	return Math.floor(Math.random() * sides) + 1;
+}
+
+function isExpression(expression) {
+	return true;
+}
+
+function isMacro(expression) {
+	return true;
 }
