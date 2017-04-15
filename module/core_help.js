@@ -6,7 +6,7 @@ global.Terms = []
 function doHelp(message,param){
 	var hasReturn = false;
 	const msgEmbed = new Discord.RichEmbed()
-			.setTitle(message.author.username);
+			.setTitle(getNickname(message));
 
 	if (!param || param.length == 0) {
 		msgEmbed.addField('Usage', 'help [term]');

@@ -6,7 +6,7 @@ registerCommand(scriptName, 'dice', Context.task, doCommandDice);
 registerHelpTerm(scriptName, 'dice', doHelpDice);
 
 var nconfDice = new nconf.Provider();
-nconfDice.use('file', { file: './'+ scriptName +'.json' });
+nconfDice.use('file', { file: './config/'+ scriptName.replace(/.js$/i, '') +'.json' });
 nconfDice.defaults({
 	'global': []
 });
@@ -17,26 +17,46 @@ function doCommandDice(message,param) {
 
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
-		.setTitle(message.author.username);
+		.setTitle(getNickname(message));
 	
 	switch (command) {
 		case 'set':
+			// Validate number of parameters. Minimum of 2, macro name [0] and macro contents [1...n]
 			if (param.length < 2) {
 				msgEmbed.addField('Error [' + command + ']', 'Missing parameters.');
 				break;
 			}
+			
+			// Split out the macro name and merge the expression
+			var macro = param.splice(0,1)[0].toLowerCase();
+			var expression = param.join();
+			
+			// Validate the macro name and expression
+			if (isValidMacroName(macro) && isExpression(expression)) {
+				// If everything passes, create the macro
+				setMacro(message.author.id,msgEmbed,macro,expression);
+			} else {
+				msgEmbed.addField('Error [' + command + ']', 'Invalid parameters.');
+			}
+			
 			break;
 		case 'unset':
-			if (param.length < 1) {
-				msgEmbed.addField('Error [' + command + ']', 'Missing parameters.');
+			// Validate number of parameters. Must have exactly one parameter, the macro name
+			if (param.length != 1) {
+				msgEmbed.addField('Error [' + command + ']', 'Wrong number of parameters.');
 				break;
 			}
 
+			// Does the macro exist?
 			var macro = param.splice(0,1)[0].toLowerCase();
-			if (!isMacro(macro)) {
+			if (!isMacro(message.author.id,macro)) {
 				msgEmbed.addField('Error [' + command + ']', 'Unknown macro [' + macro + '].');
 				break;
+			} else {
+				unsetMacro(message.author.id,msgEmbed,macro);
 			}
+			break;
+		case 'list':
 			break;
 		case 'show':
 		case 'view':
@@ -46,7 +66,7 @@ function doCommandDice(message,param) {
 			}
 
 			var macro = param.splice(0,1)[0].toLowerCase();
-			if (!isMacro(macro)) {
+			if (!isMacro(message.author.id,macro)) {
 				msgEmbed.addField('Error [' + command + ']', 'Unknown macro [' + macro + '].');
 				break;
 			}
@@ -69,18 +89,15 @@ function doCommandRoll(message,param){
 		expression = expression.split(':')[0].toLowerCase();
 	}
 	
-	console.log('Comment: '+ comment);
-	console.log('Expression: '+ expression);
-
 	// Is this an expression, or a macro, or invalid?
 	if (isExpression(expression)) {
 		doRollDice(message, param, expression, comment);		
-	} else if (isMacro(expression)) {
+	} else if (isMacro(message.author.id, expression)) {
 		doMacro(message, param, expression, comment);
 	} else {
 		// Prepare RichEmbed message
 		const msgEmbed = new Discord.RichEmbed()
-			.setTitle(message.author.username);
+			.setTitle(getNickname(message));
 		
 		// Put the comment into the message description
 		if (comment) msgEmbed.setDescription(comment);
@@ -94,7 +111,7 @@ function doCommandRoll(message,param){
 function doMacro(message,param,expression,comment) {
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
-		.setTitle(message.author.username);
+		.setTitle(getNickname(message));
 	
 	// Put the comment into the message description
 	if (comment) msgEmbed.setDescription(comment);
@@ -112,7 +129,7 @@ function doRollDice (message,param,expression,comment) {
 function doRollDice (message,param,expression,comment,modifiers) {
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
-		.setTitle(message.author.username);
+		.setTitle(getNickname(message));
 	
 	// Put the comment into the message description
 	if (comment) msgEmbed.setDescription(comment);
@@ -125,10 +142,11 @@ function doRollDice (message,param,expression,comment,modifiers) {
 		var expSplit = [expression];
 	}
 
-	console.log('expSplit: ' + expSplit);
 	if (expSplit.length > 4) return;
 	
-	expSplit.forEach(function(expSingle) {
+	for (var index in expSplit) {
+		var expSingle = expSplit[index];
+		
 		// Validate the input is a valid dice roll with valid expressions
 		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)*))/i);
 		if (!validated) {
@@ -292,7 +310,7 @@ function doRollDice (message,param,expression,comment,modifiers) {
 
 		// Add results of this expression to the RichEmbed
 		msgEmbed.addField('Rolling [' + expSingle + ']', msgText);
-	});
+	}
 	
 	// Send RichEmbed message to channel
 	message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
@@ -354,21 +372,35 @@ function isExpression(expression) {
 		var expSplit = [expression];
 	}
 
-	expSplit.forEach(function(expSingle) {
+	for (var index in expSplit) {
+		var expSingle = expSplit[index];
+		
 		// Validate the input is a valid dice roll with valid expressions
 		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)*))/i);
 		if (!validated) {
 			return false;
 		}
-	});
+	}
 	return true;
 }
 
-function isMacro(expression) {
+function isMacro(userid,macro) {
 	// Simple test for now, this will be upgraded to actually verify if the macro exists
-	if (!isValidMacroName(expression)) {
+	if (!isValidMacroName(macro)) {
 		return false;
-	} else if (macroExists(expression)) {
+	} else if (macro[0] == '~') {
+		// Global macro
+		var expression = nconfDice.get('global:'+ macro.replace('~',''));
+	} else {
+		// Personal macro
+		if (!userid) {
+			return false;
+		} else {
+			var expression = nconfDice.get('personal:'+ userid +':macros:'+ macro.replace('~',''));
+		}
+	}
+	
+	if (expression) {
 		return true;
 	} else {
 		return false;
@@ -384,6 +416,56 @@ function isValidMacroName(expression) {
 	}
 }
 
-function macroExists (expression) {
-	return false;
+function setMacro(userid,msgEmbed,macro,expression) {
+	if (macro[0] == '~') {
+		// Global macro
+		nconfDice.set('global:'+ macro.replace('~',''), expression);
+	} else {
+		// Personal macro
+		
+		if (!userid) {
+			msgEmbed.addField('Error', 'Unknown user.');
+			return;
+		} else {
+			nconfDice.set('personal:'+ userid +':macros:'+ macro.replace('~',''), expression);
+		}
+	}
+	
+	msgEmbed.addField('Macro successfully created.', macro +' ['+ expression +']');
+	saveDiceConfig();
+}
+
+function unsetMacro(userid,msgEmbed,macro) {
+	if (macro[0] == '~') {
+		// Global macro
+		var expression = nconfDice.get('global:'+ macro.replace('~',''));
+		nconfDice.clear('global:'+ macro.replace('~',''));
+	} else {
+		// Personal macro
+		
+		if (!userid) {
+			msgEmbed.addField('Error', 'Unknown user.');
+			return;
+		} else {
+			var expression = nconfDice.get('personal:'+ userid +':macros:'+ macro.replace('~',''));
+			nconfDice.clear('personal:'+ userid +':macros:'+ macro.replace('~',''));
+			
+			var macrosRemaining = nconfDice.get('personal:'+ userid +':macros');
+			if (Object.keys(macrosRemaining).length < 1) {
+				nconfDice.clear('personal:'+ userid);
+			}
+		}
+	}
+	
+	msgEmbed.addField('Macro successfully removed.', macro +' ['+ expression +']');
+	saveDiceConfig();	
+}
+
+function saveDiceConfig() {
+	nconfDice.save(function(err){
+		if (err) {
+			console.error(err.message);
+			return;
+		}
+	});
 }

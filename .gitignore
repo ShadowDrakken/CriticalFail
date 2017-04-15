@@ -1,4 +1,4 @@
-CriticalFail.json
+*.json
 module/embed.js
 module/roll.js
 CriticalFail.ps1

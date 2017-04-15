@@ -68,7 +68,7 @@ client.on('message', message => {
 	});
 });
 
-nconfMain.use('file', { file: './CriticalFail.json' });
+nconfMain.use('file', { file: './config/CriticalFail.json' });
 nconfMain.defaults({
 	'loginToken': '',
 	'opList': [],
@@ -159,7 +159,7 @@ global.loadModules = function(modulePath,message) {
 		// Add module to load list
 		Modules.push(moduleName);
 		
-		Modules = Modules.sortModules();
+		Modules = sortModules(Modules);
 		
 		// Cleanup duplicates
 		Modules = Modules.filter(function(elem, index, self) {
@@ -199,11 +199,11 @@ function loadModuleList(message,loadList) {
 	});
 }
 
-Array.prototype.sortModules = function() {
+global.sortModules = function(arr) {
 	var outCore = [];
 	var outMod = [];
 	
-	this.forEach(function(item) {
+	arr.forEach(function(item) {
 		if (item.match(/^core_.*/i)) {
 			outCore.push(item);
 		} else {
@@ -217,6 +217,21 @@ Array.prototype.sortModules = function() {
 	var newArr = outCore.concat(outMod);
 	
 	return newArr;
+}
+
+global.getNickname = function(message) {
+	var nickname;
+	if (message.member) {
+		if (message.member.nickname) {
+			nickname = message.member.nickname;
+		} else {
+			nickname = message.author.username;
+		}
+	} else {
+		nickname = message.author.username;
+	}
+	
+	return nickname;
 }
 
 loadModules();
