@@ -1,5 +1,5 @@
 var scriptName = Path.basename(__filename);
-registerCommand(scriptName, 'modules', Context.elevated, doModules);
+registerCommand(scriptName, doModules, 'modules', Context.elevated);
 
 function doModules (message,param){
 	var moduleList = [];

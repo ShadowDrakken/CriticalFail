@@ -1,9 +1,9 @@
 var scriptName = Path.basename(__filename);
-registerCommand(scriptName, 'roll', Context.task, doCommandRoll);
-registerHelpTerm(scriptName, 'roll', doHelpRoll);
+registerCommand(scriptName, doCommandRoll, 'roll', Context.task);
+registerHelpTerm(scriptName, doHelpRoll, 'roll');
 
-registerCommand(scriptName, 'macro', Context.task, doCommandMacro);
-registerHelpTerm(scriptName, 'macro', doHelpMacro);
+registerCommand(scriptName, doCommandMacro, 'macro', Context.task);
+registerHelpTerm(scriptName, doHelpMacro, 'macro');
 
 var nconfDice = new nconf.Provider();
 nconfDice.use('file', { file: './config/'+ scriptName.replace(/.js$/i, '') +'.json' });
@@ -14,8 +14,8 @@ nconfDice.load();
 
 function doHelpRoll(msg, param) {
 	msg.addField('Complex dice example',`
-4d6+2k3e6l1t4s4x6:Comment
-4d6+2 K3 E6L1 T4S4 X6 :Comment
+4d6+2k3e6l1t4s4x6 i:Comment
+4d6+2 K3 E6L1 T4S4 X6 I:Comment
 
 4d6 - roll a d6 four times, modify the pool by the keeps, then total the remaining pool
 +2 - add 2 to the total roll after applying keeps and explodes, but before applying successes; can also use -2 for subtraction
@@ -26,6 +26,8 @@ E6 - explode the dice on anything 6 or higher
 T4 - count the number of successes that meet the target value 4+
   S4 - count additional successes every 4 past the target
 X6 - roll a new set and present results 4 times
+
+I - Ignore modifiers added by macros. No effect when manually rolling.
 
 :Comment - display the comment with the returned results
 `);
@@ -153,7 +155,7 @@ function doRollDice (message,param,expression,comment,modifier) {
 		var expSingle = expSplit[index];
 		
 		// Validate the input is a valid dice roll with valid expressions
-		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)*))/i);
+		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)|[i])*))/i);
 		if (!validated) {
 			msgEmbed.addField('Error [' + expSingle + ']', 'Invalid expression.');
 			return;
@@ -177,6 +179,7 @@ function doRollDice (message,param,expression,comment,modifier) {
 		var keeps = undefined;
 		var target = undefined;
 		var successive = undefined;
+		var ignoreMod = false;
 
 		// Break out advanced expressions
 		expMods.forEach(function(item) {
@@ -203,6 +206,9 @@ function doRollDice (message,param,expression,comment,modifier) {
 					break;
 				case 's':
 					successive = expValue;
+					break;
+				case 'i':
+					ignoreMod = true;
 					break;
 				default:
 			}
@@ -303,7 +309,7 @@ function doRollDice (message,param,expression,comment,modifier) {
 			
 			if (outDropped) outDropped = ' ~~`'+ outDropped + '`~~';
 			
-			var mod = (expDice[3] ? parseInt(expDice[3]) : 0) + modifier;
+			var mod = (expDice[3] ? parseInt(expDice[3]) : 0) + (ignoreMod ? 0 : modifier);
 
 			if (mod == 0) {
 				var expModifier = '';
@@ -345,7 +351,7 @@ function isExpression(expression) {
 		var expSingle = expSplit[index];
 		
 		// Validate the input is a valid dice roll with valid expressions
-		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)*))/i);
+		var validated = expSingle.match(/^((?:\d+[d]\d+)(?:(?:[+]|[-])\d+){0,1})((?:(?:(?:(?:(?:[xelts])|(?:[k][-]{0,1}))\d+)|[i])*))/i);
 		if (!validated) {
 			return false;
 		}

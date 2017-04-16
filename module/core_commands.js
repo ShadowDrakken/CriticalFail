@@ -1,5 +1,5 @@
 var scriptName = Path.basename(__filename);
-registerCommand(scriptName, 'commands', Context.info, doCommandListCommands);
+registerCommand(scriptName, doCommandListCommands, 'commands', Context.info);
 
 function doCommandListCommands(message, param) {
 	var commandList = [];

@@ -104,7 +104,7 @@ global.getMentionFromId = function(id) {
 	return '<@' + id + '>';
 }
 
-global.registerCommand = function(owner, command, context, func, direct) {
+global.registerCommand = function(owner, func, command, context, direct) {
 	if (!typeof(func) === 'function') return false;
 	
 	// Check if there's a matching command and context registered and remove the previous version

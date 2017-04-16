@@ -1,5 +1,6 @@
 var scriptName = Path.basename(__filename);
-registerCommand(scriptName, 'load', Context.elevated, doLoad);
+registerCommand(scriptName, doLoad, 'load', Context.elevated);
+registerCommand(scriptName, doUnload, 'unload', Context.elevated);
 
 function doLoad(message,param){
 	if (param.length > 0) {
@@ -20,8 +21,6 @@ function doLoad(message,param){
 		message.channel.sendMessage('All modules reloaded.');
 	}
 }
-
-registerCommand(scriptName, 'unload', Context.elevated, doUnload);
 
 function doUnload(message,param){
 	doUnload(message,param,false);

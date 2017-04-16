@@ -1,5 +1,5 @@
 var scriptName = Path.basename(__filename);
-registerCommand(scriptName, 'op', Context.elevated, doCommandOp);
+registerCommand(scriptName, doCommandOp, 'op', Context.elevated);
 
 function doCommandOp(message, param) {
 	if (param.length > 0) {
