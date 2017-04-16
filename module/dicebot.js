@@ -42,7 +42,9 @@ function doHelpMacro(msg, param) {
 	msg.addField('Managing Macros',`
 [~]<command> <expression> - Creates a macro using standard dice notation.
 [~]<command> remove- Removes the specified macro.
-[~]<command> - Shows the saved macro expression. 
+[~]<command> - Shows the saved macro expression.
+list - Shows all registered macros. Personal macros are only displayed privately.
+verbose - As per 'list', but additionally associated expressions are displayed.
 `);
 
 	msg.addField('Notes',`
@@ -366,8 +368,10 @@ function doCommandMacro(message,param) {
 		var command = param[0];
 	}
 	
-	if (['list','showall'].indexOf(macro) >= 0) {
-		listMacros(message,msgEmbed);
+	if (['list'].indexOf(macro) >= 0) {
+		listMacros(message,msgEmbed,false);
+	} else if (['verbose'].indexOf(macro) >= 0) {
+		listMacros(message,msgEmbed,true);
 	} else if (['show','view'].indexOf(command) >= 0) {
 		// If a macro was given with no data, display the macro
 		if (!isMacro(message.author.id,macro)) {
@@ -456,24 +460,34 @@ function unsetMacro(userid,msgEmbed,macro) {
 	saveDiceConfig();	
 }
 
-function listMacros(message, msgEmbed) {
+function listMacros(message, msgEmbed, verbose) {
 	var globalMacros = nconfDice.get('global');
 	if (globalMacros) {
-		globalMacros = Object.keys(globalMacros);
-		for (var index in globalMacros) {
-			globalMacros[index] = '~' + globalMacros[index];
+		var keys = Object.keys(globalMacros);
+		for (var index in keys) {
+			if (!verbose) {
+				keys[index] = '~'+ keys[index];
+			} else {
+				keys[index] = '~'+ keys[index] +' ['+ globalMacros[keys[index]] + ']';
+			}
 		}
 		
-		if (globalMacros.length > 0)
-			msgEmbed.addField('Global Macros', globalMacros.join(', '));
+		if (keys.length > 0)
+			msgEmbed.addField('Global Macros', keys.join(', '));
 	}	
 	
-	var personalMacros = [];
 	if (message.channel.type === 'dm') {
-		personalMacros = nconfDice.get('personal:'+ message.author.id +':macros');
-		
+		var personalMacros = nconfDice.get('personal:'+ message.author.id +':macros');
+		var keys = Object.keys(personalMacros);
+
+		if (verbose) {
+			for (var index in keys) {
+				keys[index] = keys[index] +' ['+ personalMacros[keys[index]] + ']';
+			}
+		}
+
 		if (personalMacros)
-			msgEmbed.addField('Personal Macros', Object.keys(personalMacros).join(', '));
+			msgEmbed.addField('Personal Macros', keys.join(', '));
 	}
 	
 	if (globalMacros.length == 0 && !personalMacros)
