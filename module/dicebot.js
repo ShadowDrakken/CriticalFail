@@ -81,17 +81,34 @@ function doCommandRoll(message,param){
 	}
 }
 
-function doRollMacro(message,param,expression,comment) {
+function doRollMacro(message,param,macro,comment) {
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
 		.setTitle(getNickname(message));
 	
-	// Put the comment into the message description
-	if (comment) msgEmbed.setDescription(comment);
-
-	msgEmbed.addField(expression, 'Valid macro name');
-
-	message.channel.sendEmbed(msgEmbed);	
+	var userid = message.author.id;
+	
+	if (macro[0] == '~') {
+		// Global macro
+		var expression = nconfDice.get('global:'+ macro.replace('~',''));
+	} else {
+		// Personal macro		
+		var expression = nconfDice.get('personal:'+ userid +':macros:'+ macro.replace('~',''));
+	}
+	
+	if (expression.match(/:/g)) {
+		var macroComment = expression.split(':')[1];
+		
+		if (comment) {
+			comment = macroComment +' ['+ comment +']';
+		} else {
+			comment = macroComment;
+		}
+		
+		expression = expression.split(':')[0];
+	}
+	
+	doRollDice(message,param,expression,comment);
 }
 
 function doRollDice (message,param,expression,comment) {
@@ -350,7 +367,8 @@ function doCommandMacro(message,param) {
 		}
 	} else {
 		// Merge the expression
-		var expression = param.join();
+		console.log(param);
+		var expression = param.join(' ');
 		
 		// Validate the macro name and expression
 		if (isValidMacroName(macro) && isExpression(expression)) {
@@ -422,15 +440,21 @@ function listMacros(message, msgEmbed) {
 		for (var index in globalMacros) {
 			globalMacros[index] = '~' + globalMacros[index];
 		}
-		msgEmbed.addField('Global Macros', globalMacros.join(', '));
-	}
+		
+		if (globalMacros.length > 0)
+			msgEmbed.addField('Global Macros', globalMacros.join(', '));
+	}	
 	
+	var personalMacros = [];
 	if (message.channel.type === 'dm') {
-		var personalMacros = nconfDice.get('personal:'+ message.author.id +':macros');
+		personalMacros = nconfDice.get('personal:'+ message.author.id +':macros');
 		
 		if (personalMacros)
 			msgEmbed.addField('Personal Macros', Object.keys(personalMacros).join(', '));
 	}
+	
+	if (globalMacros.length == 0 && !personalMacros)
+		msgEmbed.setDescription('No macros have been created.');
 }
 
 function isMacro(userid,macro) {
