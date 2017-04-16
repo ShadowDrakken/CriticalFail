@@ -65,8 +65,8 @@ function doCommandRoll(message,param){
 	// Is this an expression, or a macro, or invalid?
 	if (isExpression(expression)) {
 		doRollDice(message, param, expression, comment);		
-	} else if (isMacro(message.author.id, expression)) {
-		doRollMacro(message, param, expression, comment);
+	} else if (isMacro(message.author.id, param[0])) {
+		doRollMacro(message, param, comment);
 	} else {
 		// Prepare RichEmbed message
 		const msgEmbed = new Discord.RichEmbed()
@@ -81,7 +81,20 @@ function doCommandRoll(message,param){
 	}
 }
 
-function doRollMacro(message,param,macro,comment) {
+function doRollMacro(message,param,comment) {
+	var macro = param.splice(0,1)[0].toLowerCase();
+	var tail = param.join(' ');
+	
+	if (tail.match(/:/g)) {
+		//var modifiers = tail.split(':')[0].replace(' ','').split(';');
+		var modifier = parseInt(tail.split(':')[0].split(' ')[0]);
+		
+		if (modifier == NaN) modifier = 0;
+	} else {
+		//var modifiers = [];
+		var modifier = parseInt(tail.split(' ')[0]);
+	}
+	
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
 		.setTitle(getNickname(message));
@@ -108,15 +121,15 @@ function doRollMacro(message,param,macro,comment) {
 		expression = expression.split(':')[0];
 	}
 	
-	doRollDice(message,param,expression,comment);
+	doRollDice(message,param,expression,comment,modifier);
 }
 
 function doRollDice (message,param,expression,comment) {
-	var modifiers = [];
-	doRollDice(message, param, expression, comment, modifiers);
+	var modifier = 0;
+	doRollDice(message, param, expression, comment, modifier);
 }
 
-function doRollDice (message,param,expression,comment,modifiers) {
+function doRollDice (message,param,expression,comment,modifier) {
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
 		.setTitle(getNickname(message));
@@ -288,18 +301,28 @@ function doRollDice (message,param,expression,comment,modifiers) {
 			
 			if (outDropped) outDropped = ' ~~`'+ outDropped + '`~~';
 			
-			if (target) {
-				total = countSuccesses(diceRolls.reduce(function(a,b) {return a + b.sum}, 0) + (expDice[3] ? parseInt(expDice[3]) : 0));
+			var mod = parseInt((expDice[3] ? parseInt(expDice[3]) : 0) + modifier);
+			if (mod == 0) {
+				var expModifier = '';
+			} else if (mod > 0) {
+				var expModifier = '+'+ mod;
 			} else {
-				total = diceRolls.reduce(function(a,b) {return a + b.sum}, 0) + (expDice[3] ? parseInt(expDice[3]) : 0);
+				var expModifier = mod
 			}
-			RollSets.push(('`'+ validated[1] + '`=`'+ outRolls +'`'+ outDropped +'=`'+ total +'`').trim());
+
+			if (target) {
+				total = countSuccesses(diceRolls.reduce(function(a,b) {return a + b.sum}, 0) + mod);
+			} else {
+				total = diceRolls.reduce(function(a,b) {return a + b.sum}, 0) + mod;
+			}
+			
+			RollSets.push(('`'+ expDice[1] +'d'+ expDice[2] + expModifier + '`=`'+ outRolls +'`'+ outDropped +'=`'+ total +'`').trim());
 		}
 		
 		msgText = RollSets.join("\r\n");
 
 		// Add results of this expression to the RichEmbed
-		msgEmbed.addField('Rolling [' + expSingle + ']', msgText);
+		msgEmbed.addField('Rolling [' + expDice[1] +'d'+ expDice[2] + expModifier + expMods.join('') +']', msgText);
 	}
 	
 	// Send RichEmbed message to channel
@@ -367,7 +390,6 @@ function doCommandMacro(message,param) {
 		}
 	} else {
 		// Merge the expression
-		console.log(param);
 		var expression = param.join(' ');
 		
 		// Validate the macro name and expression
