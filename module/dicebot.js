@@ -83,16 +83,16 @@ function doCommandRoll(message,param){
 
 function doRollMacro(message,param,comment) {
 	var macro = param.splice(0,1)[0].toLowerCase();
-	var tail = param.join(' ');
+	var tail = param.length > 0 ? param.join(' ') : '';
 	
-	if (tail.match(/:/g)) {
+	if (tail == '') {
+		var modifier = 0;
+	} else if (tail.match(/:/g)) {
 		//var modifiers = tail.split(':')[0].replace(' ','').split(';');
-		var modifier = parseInt(tail.split(':')[0].split(' ')[0]);
-		
-		if (modifier == NaN) modifier = 0;
+		var modifier = parseInt(tail.split(':')[0].replace(' ',''));
 	} else {
 		//var modifiers = [];
-		var modifier = parseInt(tail.split(' ')[0]);
+		var modifier = parseInt(tail.replace(' ',''));
 	}
 	
 	// Prepare RichEmbed message
@@ -301,7 +301,8 @@ function doRollDice (message,param,expression,comment,modifier) {
 			
 			if (outDropped) outDropped = ' ~~`'+ outDropped + '`~~';
 			
-			var mod = parseInt((expDice[3] ? parseInt(expDice[3]) : 0) + modifier);
+			var mod = (expDice[3] ? parseInt(expDice[3]) : 0) + modifier;
+
 			if (mod == 0) {
 				var expModifier = '';
 			} else if (mod > 0) {
