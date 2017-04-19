@@ -1,5 +1,6 @@
 var scriptName = Path.basename(__filename);
 registerCommand(scriptName, doCommandOp, 'op', Context.elevated);
+registerCommand(scriptName, doCommandServer, 'server', Context.elevated);
 
 function doCommandOp(message, param) {
 	if (param.length > 0) {
@@ -75,4 +76,28 @@ function doCommandOp(message, param) {
 		}
 		
 	}
+}
+
+function doCommandServer(message, param) {
+	if (param.length > 1) {
+		var server = param.splice(0,1)[0].toLowerCase();
+		var command = param.splice(0,1)[0].toLowerCase();
+		
+		switch (command) {
+			case 'leave':
+				leaveServer(message, server);
+				break;
+			default:
+				break;
+		}
+	}
+}
+
+function leaveServer(message, serverID) {
+	client.guilds.forEach(function (guild) {
+		if (guild.id == serverID) {
+			message.channel.sendMessage('Leaving server `'+ guild.name +'`');
+			guild.leave();
+		}
+	});
 }
