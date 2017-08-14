@@ -81,7 +81,7 @@ function doCommandRoll(message,param){
 
 		msgEmbed.addField('Error [' + expression + ']', 'Invalid expression.');
 
-		message.channel.sendEmbed(msgEmbed);
+		message.channel.send({embed: msgEmbed});
 	}
 }
 
@@ -335,7 +335,7 @@ function doRollDice (message,param,expression,comment,modifier) {
 	}
 	
 	// Send RichEmbed message to channel
-	message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
+	message.channel.send({embed: msgEmbed, disableEveryone: true }).catch(console.error);
 }
 
 function isExpression(expression) {
@@ -412,7 +412,7 @@ function doCommandMacro(message,param) {
 		}		
 	}
 	
-	message.channel.sendEmbed(msgEmbed);
+	message.channel.send({embed: msgEmbed});
 }
 
 function setMacro(userid,msgEmbed,macro,expression) {
