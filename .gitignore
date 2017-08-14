@@ -2,3 +2,4 @@
 module/embed.js
 module/roll.js
 CriticalFail.ps1
+node_modules
