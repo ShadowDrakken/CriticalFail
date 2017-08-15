@@ -20,5 +20,5 @@ function doCommandListCommands(message, param) {
 	});
 	
 	commandList.sort();	
-	message.channel.sendMessage(commandList.join(' '));
+	message.channel.send(commandList.join(' '));
 }

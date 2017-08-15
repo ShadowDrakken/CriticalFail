@@ -18,7 +18,7 @@ function doCommandOp(message, param) {
 				});
 				retMessage = retMessage.replace(/, $/g,'')
 				
-				message.channel.sendMessage('Op List: ' + retMessage);
+				message.channel.send('Op List: ' + retMessage);
 				break;
 			case 'add':
 				param.splice(0,1);
@@ -30,17 +30,17 @@ function doCommandOp(message, param) {
 					var user = message.channel.guild.members.get(getIdFromMention(mention)).user;
 					
 					if (!user) {
-						message.channel.sendMessage('Unable to add '+ mention +' to op list. Invalid user.');
+						message.channel.send('Unable to add '+ mention +' to op list. Invalid user.');
 					} else if (opList.find(x => x.id === user.id)) {
 						if (message.author.id === user.id)
-							message.channel.sendMessage('You are already an op.');
+							message.channel.send('You are already an op.');
 						else
-							message.channel.sendMessage(mention + ' is already an op.');
+							message.channel.send(mention + ' is already an op.');
 					} else {
 						var op = {id:user.id, username:user.username, discriminator:user.discriminator};
 						
 						opList.push(op);
-						message.channel.sendMessage('Added ' + mention + ' to the op list.');
+						message.channel.send('Added ' + mention + ' to the op list.');
 					}
 				});
 				
@@ -57,14 +57,14 @@ function doCommandOp(message, param) {
 					var user = message.channel.guild.members.get(getIdFromMention(mention)).user;
 					
 					if (!user) {
-						message.channel.sendMessage('Unable to remove '+ mention +' from op list. Invalid user.');
+						message.channel.send('Unable to remove '+ mention +' from op list. Invalid user.');
 					} else if (!opList.find(x => x.id === user.id)) {
-						message.channel.sendMessage(mention + ' is not currently an op.');
+						message.channel.send(mention + ' is not currently an op.');
 					} else if (message.author.id === user.id) {
-						message.channel.sendMessage('You cannot remove yourself from the op list.');
+						message.channel.send('You cannot remove yourself from the op list.');
 					} else {
 						opList.splice(opList.find(x => x.id === user.id),1);
-						message.channel.sendMessage('Removed ' + mention + ' from the op list.');
+						message.channel.send('Removed ' + mention + ' from the op list.');
 					}
 				});
 				
@@ -96,7 +96,7 @@ function doCommandServer(message, param) {
 function leaveServer(message, serverID) {
 	client.guilds.forEach(function (guild) {
 		if (guild.id == serverID) {
-			message.channel.sendMessage('Leaving server `'+ guild.name +'`');
+			message.channel.send('Leaving server `'+ guild.name +'`');
 			guild.leave();
 		}
 	});

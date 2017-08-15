@@ -27,5 +27,5 @@ function doModules (message,param){
 
 function callbackModules(message, moduleList) {
 	moduleList.sort();
-	message.channel.sendMessage(moduleList.join(' '));
+	message.channel.send(moduleList.join(' '));
 }

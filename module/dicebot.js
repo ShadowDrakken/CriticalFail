@@ -134,6 +134,8 @@ function doRollDice (message,param,expression,comment) {
 }
 
 function doRollDice (message,param,expression,comment,modifier) {
+	if (!modifier) modifier = 0;
+	
 	// Prepare RichEmbed message
 	const msgEmbed = new Discord.RichEmbed()
 		.setTitle(getNickname(message));

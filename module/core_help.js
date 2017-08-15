@@ -58,7 +58,7 @@ function doHelp(message,param){
 	}
 	
 	if (hasReturn)
-		message.channel.sendEmbed(msgEmbed, '', { disableEveryone: true }).catch(console.error);
+		message.channel.send({embad: msgEmbed, disableEveryone: true }).catch(console.error);
 }
 
 function getTopic(topic) {

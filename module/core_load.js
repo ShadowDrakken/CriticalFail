@@ -18,7 +18,7 @@ function doLoad(message,param){
 		});
 	} else {
 		loadModules();
-		message.channel.sendMessage('All modules reloaded.');
+		message.channel.send('All modules reloaded.');
 	}
 }
 
@@ -35,7 +35,7 @@ function doUnload(message,param,silent){
 			
 			// This module should not be able to unload itself to prevent losing the ability to load modules
 			if (moduleFile === scriptName) {
-				if (!silent) message.channel.sendMessage('Module `' + module + '` cannot unloaded itself.');
+				if (!silent) message.channel.send('Module `' + module + '` cannot unloaded itself.');
 				return;
 			}
 			
@@ -63,9 +63,9 @@ function doUnload(message,param,silent){
 				
 				delete require.cache[moduleRealPath];
 				delete LoadedModules[module];
-				if (!silent) message.channel.sendMessage('Module `' + module + '` unloaded.');
+				if (!silent) message.channel.send('Module `' + module + '` unloaded.');
 			} else {
-				if (!silent) message.channel.sendMessage('Module `' + module + '` is not currently loaded.');
+				if (!silent) message.channel.send('Module `' + module + '` is not currently loaded.');
 			}
 		});
 		
