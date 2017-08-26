@@ -1,5 +1,5 @@
 var scriptName = Path.basename(__filename);
-registerCommand(scriptName, doHelp, 'help', Context.info, true);
+registerCommand(scriptName, doHelp, 'help', Context.info, false);
 
 global.Terms = []
 
@@ -58,7 +58,7 @@ function doHelp(message,param){
 	}
 	
 	if (hasReturn)
-		message.channel.send({embad: msgEmbed, disableEveryone: true }).catch(console.error);
+		message.channel.send({embed: msgEmbed, disableEveryone: true }).catch(console.error);
 }
 
 function getTopic(topic) {
